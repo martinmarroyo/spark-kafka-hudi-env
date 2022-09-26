@@ -10,20 +10,25 @@ docker compose up -d
 ``` 
 This will launch the environment and then you can start using it. It will also create a `localdevelopment` directory inside the root of this environment folder. This directory is mapped from your local machine to the container. This is done so that you can develop code locally and run it inside the container as needed. **You need to store all of your code inside of `localdevelopment` if you want to run it in the container.**
 
+### Setting Environment Variables
+
+There are several ways you can add environment variables. You can remote into a container's shell using: `docker exec -it [container name] bash`. You can also set them in the `config` file in either of the service folders (`kafka` and `spark`) in this repo. Additionally, you can modify the `docker-compose` file to add environment variables to a specific container using the `environment` property.
+
 ## Spark, Jupyter, and Hudi
 
 The jar files needed to read/write to Hudi and AWS are included in the container already. To open a Jupyter Notebook, open the following link in your browser:
 ```
 http://localhost:8088/tree?token=spudi
 ```
+*Note: You can set the token in the `/spark/config` file. `spudi` is the default token.*
 
 Since the Jupyter Kernel we'll be using is not connected to PySpark by default, we have to initialize the session ourselves. Here is a generic template to use to start your Spark sessions with AWS access and Hudi enabled:
 ``` python
 import os
 from pyspark.sql import SparkSession
+# You can also set your AWS credentials in the `environment` file in this repo
 os.environ["AWS_ACCESS_KEY_ID"] = "Your AWS Access Key ID"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "Your AWS Secret Access Key"
-os.environ["PYSPARK_PYTHON"] = "python"
 # Set your app name here
 APP_NAME = "my app name"
 spark = SparkSession.builder \
@@ -76,4 +81,25 @@ The Kafka broker is started up with the `docker compose` command, so there is no
 ```
 kafka-broker:9092
 ``` 
+### Testing Kafka
 
+To test Kafka, you can create a producer & consumer to prove that it is working as expected. You can use the following code snippet to test it out:
+
+```python
+from kafka import KafkaProducer, KafkaConsumer
+
+producer = KafkaProducer(bootstrap_servers=["kafka-broker:9092"])
+consumer = KafkaConsumer("test", bootstrap_servers=["kafka-broker:9092"], auto_offset_reset='earliest')
+
+producer.send("test", value="I am a test".encode('utf-8'))
+
+for message in consumer:
+    print(message)
+    break
+```
+
+This code snippet should print the following message:
+
+```
+ConsumerRecord(topic='test', partition=0, offset=0, timestamp=1664225075724, timestamp_type=0, key=None, value=b'I am a test', headers=[], checksum=None, serialized_key_size=-1, serialized_value_size=11, serialized_header_size=-1)
+```
