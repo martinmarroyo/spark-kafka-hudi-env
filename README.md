@@ -38,6 +38,38 @@ sc.setLogLevel("OFF") # Adjust the logging level here (set to 'OFF' by default d
 ``` 
 You can simply copy/paste this into the first cell of any notebook that you need to use Pyspark with and just add in your AWS credentials and update the `APP_NAME`.
 
+### Testing Hudi
+
+If you want to test out Hudi to ensure that it is working, you can run the following code snippet to generate and view sample data:
+```python
+# Generate hudi trips data sample
+tableName = "hudi_trips_cow"
+basePath = "file:///tmp/hudi_trips_cow"
+dataGen = sc._jvm.org.apache.hudi.QuickstartUtils.DataGenerator()
+inserts = sc._jvm.org.apache.hudi.QuickstartUtils.convertToStringList(dataGen.generateInserts(10))
+df = spark.read.json(spark.sparkContext.parallelize(inserts, 2))
+
+hudi_options = {
+    'hoodie.table.name': tableName,
+    'hoodie.datasource.write.recordkey.field': 'uuid',
+    'hoodie.datasource.write.partitionpath.field': 'partitionpath',
+    'hoodie.datasource.write.table.name': tableName,
+    'hoodie.datasource.write.operation': 'upsert',
+    'hoodie.datasource.write.precombine.field': 'ts',
+    'hoodie.upsert.shuffle.parallelism': 2,
+    'hoodie.insert.shuffle.parallelism': 2
+}
+
+df.write.format("hudi"). \
+    options(**hudi_options). \
+    mode("overwrite"). \
+    save(basePath)
+
+# Read the Hudi data and show as a pandas dataframe
+test = spark.read.format("org.apache.hudi").load(basePath)
+
+test.toPandas().head(-1)
+```
 ## Kafka
 
 The Kafka broker is started up with the `docker compose` command, so there is no setup required on your part. You can access the bootstrap server at: 
