@@ -26,7 +26,7 @@ Since the Jupyter Kernel we'll be using is not connected to PySpark by default, 
 ``` python
 import os
 from pyspark.sql import SparkSession
-# You can also set your AWS credentials in the `environment` file in this repo
+# You can also set your AWS credentials in the `/spark/config` file in this repo
 os.environ["AWS_ACCESS_KEY_ID"] = "Your AWS Access Key ID"
 os.environ["AWS_SECRET_ACCESS_KEY"] = "Your AWS Secret Access Key"
 # Set your app name here
@@ -41,7 +41,7 @@ spark = SparkSession.builder \
 sc = spark.sparkContext
 sc.setLogLevel("OFF") # Adjust the logging level here (set to 'OFF' by default due to hudi's verbosity)
 ``` 
-You can simply copy/paste this into the first cell of any notebook that you need to use Pyspark with and just add in your AWS credentials and update the `APP_NAME`.
+You can simply copy/paste this into the first cell of any notebook that you need to use Pyspark in. Just add in your AWS credentials (if needed) and update the `APP_NAME`.
 
 ### Testing Hudi
 
